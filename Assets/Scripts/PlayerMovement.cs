@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,6 +11,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float runSpeed = 8f;
     [SerializeField] float jumpSpeed = 25f;
     [SerializeField] float climbSpeed = 5f;
+    [SerializeField] Vector2 deathKick = new Vector2(-20f, 40f);
+    [SerializeField] PhysicsMaterial2D AliveBodyMaterial;
+    [SerializeField] PhysicsMaterial2D DeadBodyMaterial;
 
     Rigidbody2D myRigidbody;
     Animator myAnimator;
@@ -17,30 +21,44 @@ public class PlayerMovement : MonoBehaviour
     CapsuleCollider2D myBodyCollider;
     BoxCollider2D myFeetCollider;
     float gravityScaleAtStart;
+    bool isAlive = true;
     void Start()
     {
         myRigidbody = GetComponent<Rigidbody2D>();
         myAnimator = GetComponent<Animator>();
         myBodyCollider = GetComponent<CapsuleCollider2D>();
+        myBodyCollider.sharedMaterial = AliveBodyMaterial;
         myFeetCollider = GetComponent<BoxCollider2D>();
         gravityScaleAtStart = myRigidbody.gravityScale;
     }
 
     void Update()
     {
+        if (!isAlive)
+        {
+            return;
+        }
         Run();
         FlipSprite();
         ClimbLadder();
+        Die();
     }
 
     void OnMove(InputValue value)
     {
+        if (!isAlive)
+        {
+            return;
+        }
         moveInput = value.Get<Vector2>();
-        Debug.Log(moveInput);
     }
 
     void OnJump(InputValue value)
     {
+        if (!isAlive)
+        {
+            return;
+        }
         if (!myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Ground")))
         {
             return;
@@ -85,5 +103,16 @@ public class PlayerMovement : MonoBehaviour
 
         bool playerHasVerticalSpeed = Mathf.Abs(myRigidbody.velocity.y) > Mathf.Epsilon;
         myAnimator.SetBool("isClimbing", playerHasVerticalSpeed);
+    }
+
+    void Die()
+    {
+        if (myBodyCollider.IsTouchingLayers(LayerMask.GetMask("Enemies")))
+        {
+            isAlive = false;
+            myAnimator.SetTrigger("Dying");
+            myRigidbody.velocity = deathKick;
+            myBodyCollider.sharedMaterial = DeadBodyMaterial;
+        }
     }
 }
