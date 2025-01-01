@@ -14,6 +14,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] Vector2 deathKick = new Vector2(-20f, 40f);
     [SerializeField] PhysicsMaterial2D AliveBodyMaterial;
     [SerializeField] PhysicsMaterial2D DeadBodyMaterial;
+    [SerializeField] GameObject arrow;
+    [SerializeField] Transform arrowSpawn;
 
     Rigidbody2D myRigidbody;
     Animator myAnimator;
@@ -68,6 +70,17 @@ public class PlayerMovement : MonoBehaviour
         {
             myRigidbody.velocity += new Vector2(0f, jumpSpeed);
         }
+    }
+
+    void OnFire(InputValue value)
+    {
+        if (!isAlive)
+        {
+            return;
+        }
+
+        myAnimator.Play("Shooting Arrow");
+        Instantiate(arrow, arrowSpawn.position, transform.rotation);
     }
 
     void Run()
